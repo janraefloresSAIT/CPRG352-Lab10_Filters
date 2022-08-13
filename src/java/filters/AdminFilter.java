@@ -1,5 +1,6 @@
 package filters;
 
+import dataaccess.UserDB;
 import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -10,32 +11,39 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import models.User;
 
-public class AuthenticationFilter implements Filter {
+/**
+ *
+ * @author Flores
+ */
+public class AdminFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        // before we can use HttpServletRequest or HttpServletResponse methods
-        // we must cast the ServletRequest and ServletResponse objects as the correct type
+
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession();
-        String email = (String)session.getAttribute("email");
-        
-        if( email == null ){
+        String email = (String) session.getAttribute("email");
+
+        if (email == null) {
             HttpServletResponse httpResponse = (HttpServletResponse) response;
             httpResponse.sendRedirect("login");
             return;
+        } else if (email != null) {
+            UserDB userdb = new UserDB();
+            User user = userdb.get(email);
+
+            if (user.getRole().getRoleId() == 1) {
+                chain.doFilter(request, response);
+            } else {
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                httpResponse.sendRedirect("notes");
+                return;
+            }
         }
-        
-        // any code before chain.doFilter
-        // will be executed before the servlet
-        chain.doFilter(request, response);
-        // any code after chain.doFilter
-        // will be executed after the servlet
-        
     }
 
-    // the init and destroy methods are not needed in this case
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
     }
